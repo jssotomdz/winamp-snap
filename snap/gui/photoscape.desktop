@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Winamp
+Categories=Sound & Video
+Exec=winamp %F
+Icon=${SNAP}/meta/gui/winamp.svg
+Terminal=false
+StartupNotify=true
+StartupWMClass=winamp.exe
