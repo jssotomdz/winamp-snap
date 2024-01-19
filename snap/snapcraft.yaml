@@ -1,6 +1,6 @@
 name: winamp
 title: winamp
-version: "5.9.1"
+version: "5.9.2"
 summary: The legendary Winamp media player.
 description: |
   The new Winamp Player offers the best of everything, bringing your streaming services, podcasts, radio stations, audio books and downloads together.
@@ -9,12 +9,11 @@ description: |
 grade: stable
 icon: snap/gui/winamp.svg
 
-base: core18
+base: core20
 confinement: strict
 
 architectures:
   - build-on: amd64
-  - build-on: i386
 
 environment:
   WINEDLLOVERRIDES: "$WINEDLLOVERRIDES;mscoree,mshtml="    # Prevent pop-ups about Wine Mono and Wine Gecko
@@ -22,11 +21,11 @@ environment:
 
 apps:
   winamp:
-    extensions: [ gnome-3-28 ]
+    extensions: [ gnome-3-38 ]
     command: bin/sommelier run-exe
     environment:
       RUN_EXE: "C:/Program Files (x86)/Winamp/winamp.exe"
-      INSTALL_EXE: "$SNAP/winamp_latest_full.exe"
+      INSTALL_URL: "https://download.winamp.com/winamp/winamp_latest_full.exe"
       INSTALL_FLAGS: "/S"
     plugs:
       - home
@@ -41,7 +40,7 @@ apps:
   # For example, users can configure the wine environment of this snap
   # by running `myapp.wine winecfg`.
   wine:
-    extensions: [ gnome-3-28 ]
+    extensions: [ gnome-3-38 ]
     command: bin/sommelier
     plugs:
       - home
@@ -52,29 +51,39 @@ apps:
  # The winetricks command can be used to run winetricks inside the wine
   # environment that this snap uses.
   winetricks:
-    extensions: [ gnome-3-28 ]
+    extensions: [ gnome-3-38 ]
     command: bin/sommelier winetricks
     plugs:
       - network
 
 parts:
-  installer:
-    plugin: dump
-    source: installer
-
   # The sommelier script helps you snap Windows applications using Wine. It 
   # initializes and configures Wine and installs the Windows application.
   sommelier:
     plugin: make
-    source: https://github.com/snapcrafters/sommelier-core.git
+    source: https://github.com/mmtrt/sommelier-core.git
+    source-branch: "tmp-core20"
+    
+  fix-fontconfig:
+    plugin: nil
+    after: [gnome-3-38-extension]
+    override-prime: |
+      sed -i '/snap-package/,+1d' $SNAPCRAFT_PRIME/snap/command-chain/desktop-launch
+
+  fix-bindtext:
+    plugin: nil
+    after: [gnome-3-38-extension]
+    override-prime: |
+      sed -i "$(grep -in bindtext $SNAPCRAFT_PRIME/snap/command-chain/desktop-launch | cut -d':' -f1 | tail -2 | head -1)d" $SNAPCRAFT_PRIME/snap/command-chain/desktop-launch
+      sed -i "$(grep -in bindtext $SNAPCRAFT_PRIME/snap/command-chain/desktop-launch | cut -d':' -f1 | tail -1)d" $SNAPCRAFT_PRIME/snap/command-chain/desktop-launch
 
 # These plugs are used to connect the snap to the wine runtime.
 plugs:
-  wine-runtime:
+  wine-runtime-c20:
     interface: content
     target: $SNAP/wine-runtime
-    default-provider: wine-platform-runtime
-  wine-5-stable:
+    default-provider: wine-platform-runtime-core20
+  wine-7-devel:
     interface: content
     target: $SNAP/wine-platform
-    default-provider: wine-platform-5-stable
+    default-provider: wine-platform-7-devel-core20
